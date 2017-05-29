@@ -19,8 +19,13 @@ print(__doc__)
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle as pkl
+from sklearn import linear_model
 # Import datasets, classifiers and performance metrics   datasets,
 from sklearn import svm, metrics
+from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
+from sklearn import datasets
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import SVC
 
 import time
 start_time = time.time()
@@ -35,7 +40,7 @@ datas = load_data()
 X_train = datas[0]
 Y_train = datas[1]
 length = len(X_train)
-cut_off = round(length * 0.20)
+cut_off = round(length )
 fr = 1000
 to = 1900
 
@@ -51,7 +56,7 @@ target = Y_train[0: cut_off, :]
 # the dataset.
 images_and_labels = list(zip(images, target))
 
-for index, (image, label) in enumerate(images_and_labels[20:25]):
+for index, (image, label) in enumerate(images_and_labels[17:22]):
     plt.subplot(2, 4, index + 1)
     plt.axis('off')
     image =  np.reshape(image, (56, 56))
@@ -62,23 +67,27 @@ for index, (image, label) in enumerate(images_and_labels[20:25]):
 # To apply a classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(images)
-data = images[:, 1000:1900] #images.reshape((n_samples, -1))
-
+data = images #[:, 1000:1900] #images.reshape((n_samples, -1))
+cut_off = 1.5
 # Create a classifier: a support vector classifier
-classifier = svm.SVC(gamma=0.001, cache_size=7000)
-
+#classifier = svm.SVC(gamma=0.001)
+classifier = RandomForestClassifier(min_samples_leaf=20)
 # We learn the digits on the first half of the digits
-classifier.fit(data[:n_samples / 2],target[:n_samples / 2])
-
+classifier.fit(data[:n_samples / cut_off],target[:n_samples / cut_off])
+#classifier = svm.LinearSVC() #_model.SGDRegressor()
+#classifier.fit( X = data[:n_samples / 2], y=target[:n_samples / 2])
 # Now predict the value of the digit on the second half:
-expected = target[n_samples / 2:]
-predicted = classifier.predict(data[n_samples / 2:])
+expected = target[n_samples /cut_off:]
+predicted = classifier.predict(data[n_samples / cut_off:])
 
 print("Classification report for classifier %s:\n%s\n"
-      % (classifier, metrics.classification_report(expected, predicted)))
-print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
+      % (classifier, metrics.classification_report(expected, predicted))
+      )
+print("Confusion matrix:\n%s"
+      #% metrics.confusion_matrix(expected, predicted)
+      )
 
-images_and_predictions = list(zip(images[n_samples / 2:], predicted))
+images_and_predictions = list(zip(images[n_samples / cut_off:], predicted))
 for index, (image, prediction) in enumerate(images_and_predictions[:4]):
     plt.subplot(2, 4, index + 5)
     plt.axis('off')
@@ -86,8 +95,8 @@ for index, (image, prediction) in enumerate(images_and_predictions[:4]):
     plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
     plt.title('Prediction: %i' % prediction)
 
+print("--- %s seconds ---" % (time.time() - start_time))
 plt.show()
 
 
 
-print("--- %s seconds ---" % (time.time() - start_time))
